@@ -1,7 +1,6 @@
 version: '3'
 
 services:
-
   nginx:
     image: nginx:latest
     ports:
@@ -9,9 +8,10 @@ services:
     volumes:
       - .:/code
       - ./config/nginx:/etc/nginx/conf.d
+      - ./static:/static
+      - ./media:/media/
     depends_on:
       - web
-
   db:
     image: mysql:5.7
     ports:
@@ -29,13 +29,14 @@ services:
   web:
     build: .
     # command: bash -c "python /code/manage.py migrate --noinput && python /code/manage.py runserver 0.0.0.0:8000"
+    container_name: example_django
     command: bash -c "python /code/manage.py migrate --noinput && gunicorn test_ap.wsgi -b 0.0.0.0:8000"
     environment:
       UTA_DB_URL: postgresql://anonymous@localhost:5432/uta/uta_20171026
     volumes:
       - .:/code
-    ports:
-      - "8002:8000"
+      - ./static:/static
+      - ./media:/media/
     depends_on:
       - db
       - redis
@@ -53,7 +54,7 @@ services:
     depends_on:
       - db
       - redis
-      
+
   celery-beat:
     build: .
     command: celery -A test_ap beat -l info
